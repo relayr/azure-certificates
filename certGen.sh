@@ -15,20 +15,20 @@
 root_ca_dir="."
 home_dir="."
 algorithm="genrsa"
-COUNTRY="US"
-STATE="WA"
-LOCALITY="Redmond"
-ORGANIZATION_NAME="My Organization"
+COUNTRY="PL"
+STATE="Silesia"
+LOCALITY="Katowice"
+ORGANIZATION_NAME="relayr GmbH"
 root_ca_password="1234"
 key_bits_length="4096"
 days_till_expire=30
-ca_chain_prefix="azure-iot-test-only.chain.ca"
+ca_chain_prefix="relayr-test-only.chain.ca"
 intermediate_ca_dir="."
 openssl_root_config_file="./openssl_root_ca.cnf"
 openssl_intermediate_config_file="./openssl_device_intermediate_ca.cnf"
 intermediate_ca_password="1234"
-root_ca_prefix="azure-iot-test-only.root.ca"
-intermediate_ca_prefix="azure-iot-test-only.intermediate"
+root_ca_prefix="relayr-test-only.root.ca"
+intermediate_ca_prefix="relayr-test-only.intermediate"
 
 function makeCNsubject()
 {
