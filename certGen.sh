@@ -187,7 +187,6 @@ function generate_device_certificate_common()
     local device_prefix="${2}"
     local certificate_dir="${3}"
     local ca_password="${4}"
-    local server_pfx_password="P@ssw0rd"
     local password_cmd=" -passin pass:${ca_password} "
     local openssl_config_file="${5}"
     local openssl_config_extension="${6}"
@@ -236,17 +235,6 @@ function generate_device_certificate_common()
     echo ""
     openssl x509 -noout -text \
             -in ${certificate_dir}/certs/${device_prefix}.cert.pem
-    [ $? -eq 0 ] || exit $?
-    echo "Create the ${cert_type_diagnostic} PFX Certificate"
-    echo "----------------------------------------"
-    openssl pkcs12 -in ${certificate_dir}/certs/${device_prefix}.cert.pem \
-            -inkey ${certificate_dir}/private/${device_prefix}.key.pem \
-            -password pass:${server_pfx_password} \
-            -export -out ${certificate_dir}/certs/${device_prefix}.cert.pfx
-    [ $? -eq 0 ] || exit $?
-    echo "${cert_type_diagnostic} PFX Certificate Generated At:"
-    echo "--------------------------------------------"
-    echo "    ${certificate_dir}/certs/${device_prefix}.cert.pfx"
     [ $? -eq 0 ] || exit $?
 }
 
