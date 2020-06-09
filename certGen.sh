@@ -328,10 +328,10 @@ function generate_device_certificate()
         exit 1
     fi
 
-    rm -f ./private/new-device.key.pem
-    rm -f ./certs/new-device.key.pem
-    rm -f ./certs/new-device-full-chain.cert.pem
-    generate_leaf_certificate "${1}" "new-device" \
+    rm -f ./private/device/$1.key.pem
+    rm -f ./certs/device/$1.key.pem
+    rm -f ./certs/device/$1-full-chain.cert.pem
+    generate_leaf_certificate "${1}" "device/${1}" \
                               ${root_ca_dir} ${root_ca_password} \
                               ${openssl_root_config_file}
 }
