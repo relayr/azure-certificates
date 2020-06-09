@@ -52,7 +52,7 @@ function warn_certs_not_for_production()
 
 function generate_root_ca()
 {
-    local common_name="Azure IoT Hub CA Cert Test Only"
+    local common_name="relayr CA"
     local password_cmd=" -aes256 -passout pass:${root_ca_password} "
 
     cd ${home_dir}
@@ -103,7 +103,7 @@ function generate_root_ca()
 ###############################################################################
 function generate_intermediate_ca()
 {
-    local common_name="Azure IoT Hub Intermediate Cert Test Only"
+    local common_name="relayr Intermediate CA"
 
     local password_cmd=" -aes256 -passout pass:${intermediate_ca_password} "
     echo "Creating the Intermediate Device CA"
@@ -337,7 +337,7 @@ function generate_device_certificate()
 }
 
 ###############################################################################
-# Generates a certificate for a Edge device, chained to the intermediate.
+# Generates a certificate for Edge device, chained to the intermediate.
 ###############################################################################
 function generate_edge_device_certificate()
 {

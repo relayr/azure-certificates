@@ -59,7 +59,7 @@ On Azure IoT Hub, navigate to the IoT Devices section, or launch Azure IoT Explo
 
 * Run `./certGen.sh create_edge_device_certificate myEdgeDevice` to create the new IoT Edge device certificate.  
   This will create the files ./certs/device/myEdgeDevice.cert.pem that contain the public key and ./private/device/myEdgeDevice.key.pem that contains the Edge device's private key.  
-* `cd ./certs && cat device/myEdgeDevice.cert.pem azure-iot-test-only.intermediate.cert.pem azure-iot-test-only.root.ca.cert.pem > device/myEdgeDevice-full-chain.cert.pem` to get the public key.
+* `cd ./certs && cat device/myEdgeDevice.cert.pem relayr-test-only.intermediate.cert.pem relayr-test-only.root.ca.cert.pem > device/myEdgeDevice-full-chain.cert.pem` to get the public key.
 
 [the official documentation]: https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-security-x509-get-started
 [Edge gateway creation documentation]: https://docs.microsoft.com/en-us/azure/iot-edge/how-to-create-gateway-device
