@@ -1,4 +1,4 @@
-# Managing test CA certificates for samples and tutorials
+# Managing test CA certificates for DPS and IoT Hub
 
 ## WARNING
 
@@ -6,7 +6,7 @@ Certificates created by these scripts **MUST NOT** be used for production.  They
 
 ## Introduction
 
-This document helps create certificates for use in **pre-testing** IoT SDK's against the IoT Hub.  In particular, the tools in this directory can be used to either setup CA Certificates (along with proof of possession) or Edge device certificates.  This document assumes you have basic familiarity with the scenario you are setting up for as well as some knowledge of Bash.
+This document helps create certificates for use in **pre-testing** IoT SDK's against the DPS and IoT Hub.  In particular, the tools in this directory can be used to either setup CA Certificates (along with proof of possession) or Edge device certificates.  This document assumes you have basic familiarity with the scenario you are setting up for as well as some knowledge of Bash.
 
 This directory contains a Bash script to help create **test** certificates for Azure IoT Hub's CA Certificate / proof-of-possession and/or Edge certificates.
 
@@ -14,11 +14,15 @@ A more detailed document showing UI screen shots for CA Certificates and proof o
 
 A more detailed document explaining Edge and showing its use of certificates generated here is available from the [Edge gateway creation documentation].
 
+Before you continue with generation of certificates you need to initialize directory structure.
+* Run `./certGen.sh init`
+
 ## Create the certificate chain
 
 First you need to create a CA and an intermediate certificate signer that chains back to the CA.
 
-* Run `./certGen.sh create_root_and_intermediate`
+* Run `./certGen.sh create_root_certificate "relayr CA"`
+* Run `./certGen.sh create_intermediate_certificate "relayr Intermediate CA"`
 
 ## Proof of Possession
 
@@ -32,11 +36,7 @@ Select the new certificate that you've created and navigate to and select  "Gene
 
 In both cases, the scripts will output the name of the file containing `"CN=106A5SD242AF512B3498BD6098C4941E66R34H268DDB3288"` to the console.  Upload this file to IoT Hub (in the same UX that had the "Generate Verification Code") and select "Verify".
 
-## Create a new device
-
-Finally, let's create an application and corresponding device on IoT Hub that shows how CA Certificates are used.
-
-On Azure IoT Hub, navigate to the IoT Devices section, or launch Azure IoT Explorer.  Add a new device (e.g. `mydevice`), and for its authentication type chose "X.509 CA Signed".  Devices can authenticate to IoT Hub using a certificate that is signed by the Root CA from Step 2.
+## Create a device certificate
 
 ### IoT Leaf Device
 

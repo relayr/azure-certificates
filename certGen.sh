@@ -15,10 +15,6 @@
 root_ca_dir="."
 home_dir="."
 algorithm="genrsa"
-COUNTRY="PL"
-STATE="Silesia"
-LOCALITY="Katowice"
-ORGANIZATION_NAME="relayr GmbH"
 root_ca_password="P@ssw0rd"
 key_bits_length="4096"
 days_till_expire=30
@@ -51,7 +47,8 @@ function warn_certs_not_for_production()
 
 function generate_root_ca()
 {
-    local common_name="relayr CA"
+    local common_name=$1
+
     local password_cmd=" -aes256 -passout pass:${root_ca_password} "
 
     cd ${home_dir}
@@ -102,7 +99,7 @@ function generate_root_ca()
 ###############################################################################
 function generate_intermediate_ca()
 {
-    local common_name="relayr Intermediate CA"
+    local common_name=$1
 
     local password_cmd=" -aes256 -passout pass:${intermediate_ca_password} "
     echo "Creating the Intermediate Device CA"
@@ -266,13 +263,8 @@ function generate_leaf_certificate()
 ###############################################################################
 function prepare_filesystem()
 {
-    if [ ! -f ${openssl_root_config_file} ]; then
-        echo "Missing file ${openssl_root_config_file}"
-        exit 1
-    fi
-
-    if [ ! -f ${openssl_intermediate_config_file} ]; then
-        echo "Missing file ${openssl_intermediate_config_file}"
+    if [ ! -f ${openssl_config_file} ]; then
+        echo "Missing file ${openssl_config_file}"
         exit 1
     fi
 
@@ -293,16 +285,6 @@ function prepare_filesystem()
 
     rm -f ./serial
     echo 01 > ./serial
-}
-
-###############################################################################
-# Generates a root and intermediate certificate for CA certs.
-###############################################################################
-function initial_cert_generation()
-{
-    prepare_filesystem
-    generate_root_ca
-    generate_intermediate_ca
 }
 
 ###############################################################################
@@ -367,8 +349,12 @@ function generate_edge_device_certificate()
                                        "v3_intermediate_ca" "Edge Device"
 }
 
-if [ "${1}" == "create_root_and_intermediate" ]; then
-    initial_cert_generation
+if   [ "${1}" == "init" ]; then
+    prepare_filesystem
+elif [ "${1}" == "create_root_certificate" ]; then
+    generate_root_ca "${2}"
+elif [ "${1}" == "create_intermediate_certificate" ]; then
+    generate_intermediate_ca "${2}"
 elif [ "${1}" == "create_verification_certificate" ]; then
     generate_verification_certificate "${2}"
 elif [ "${1}" == "create_device_certificate" ]; then
@@ -376,7 +362,9 @@ elif [ "${1}" == "create_device_certificate" ]; then
 elif [ "${1}" == "create_edge_device_certificate" ]; then
     generate_edge_device_certificate "${2}"
 else
-    echo "Usage: create_root_and_intermediate                   # Creates a new root and intermediate certificates"
+    echo "Usage: init                                           # Initializes directory structure"
+    echo "       create_root_certificate <subjectName>          # Creates new root certificate"
+    echo "       create_intermediate_certificate <subjectName>  # Creates new intermediate certificate"
     echo "       create_verification_certificate <subjectName>  # Creates a verification certificate, signed with <subjectName>"
     echo "       create_device_certificate <subjectName>        # Creates a device certificate, signed with <subjectName>"
     echo "       create_edge_device_certificate <subjectName>   # Creates an edge device certificate, signed with <subjectName>"
