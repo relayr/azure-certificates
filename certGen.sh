@@ -24,8 +24,7 @@ key_bits_length="4096"
 days_till_expire=30
 ca_chain_prefix="relayr-test-only.chain.ca"
 intermediate_ca_dir="."
-openssl_root_config_file="./openssl_root_ca.cnf"
-openssl_intermediate_config_file="./openssl_device_intermediate_ca.cnf"
+openssl_config_file="./openssl.cnf"
 intermediate_ca_password="P@ssw0rd"
 root_ca_prefix="relayr-test-only.root.ca"
 intermediate_ca_prefix="relayr-test-only.intermediate"
@@ -72,7 +71,7 @@ function generate_root_ca()
     openssl req \
             -new \
             -x509 \
-            -config ${openssl_root_config_file} \
+            -config ${openssl_config_file} \
             ${password_cmd} \
             -key ${root_ca_dir}/private/${root_ca_prefix}.key.pem \
             -subj "$(makeCNsubject "${common_name}")" \
@@ -125,7 +124,7 @@ function generate_intermediate_ca()
 
     openssl req -new -sha256 \
         ${password_cmd} \
-        -config ${openssl_intermediate_config_file} \
+        -config ${openssl_config_file} \
         -subj "$(makeCNsubject "${common_name}")" \
         -key ${intermediate_ca_dir}/private/${intermediate_ca_prefix}.key.pem \
         -out ${intermediate_ca_dir}/csr/${intermediate_ca_prefix}.csr.pem
@@ -136,10 +135,12 @@ function generate_intermediate_ca()
     password_cmd=" -passin pass:${root_ca_password} "
 
     openssl ca -batch \
-        -config ${openssl_root_config_file} \
+        -config ${openssl_config_file} \
         ${password_cmd} \
         -extensions v3_intermediate_ca \
         -days ${days_till_expire} -notext -md sha256 \
+        -keyfile ${root_ca_dir}/private/${root_ca_prefix}.key.pem \
+        -cert ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem \
         -in ${intermediate_ca_dir}/csr/${intermediate_ca_prefix}.csr.pem \
         -out ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
@@ -188,7 +189,7 @@ function generate_device_certificate_common()
     local certificate_dir="${3}"
     local ca_password="${4}"
     local password_cmd=" -passin pass:${ca_password} "
-    local openssl_config_file="${5}"
+    local ca_prefix="${5}"
     local openssl_config_extension="${6}"
     local cert_type_diagnostic="${7}"
 
@@ -215,6 +216,8 @@ function generate_device_certificate_common()
             ${password_cmd} \
             -extensions "${openssl_config_extension}" \
             -days ${days_till_expire} -notext -md sha256 \
+            -keyfile ${certificate_dir}/private/${ca_prefix}.key.pem \
+            -cert ${certificate_dir}/certs/${ca_prefix}.cert.pem \
             -in ${certificate_dir}/csr/${device_prefix}.csr.pem \
             -out ${certificate_dir}/certs/${device_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
@@ -248,11 +251,12 @@ function generate_leaf_certificate()
     local device_prefix="${2}"
     local certificate_dir="${3}"
     local ca_password="${4}"
-    local openssl_config_file="${5}"
+    local ca_prefix="${5}"
 
     generate_device_certificate_common "${common_name}" "${device_prefix}" \
                                        "${certificate_dir}" "${ca_password}" \
-                                       "${openssl_config_file}" "usr_cert" \
+                                       "${ca_prefix}" \
+                                       "usr_cert" \
                                        "Leaf Device"
 }
 
@@ -315,7 +319,7 @@ function generate_verification_certificate()
     rm -f ./certs/verification-code.cert.pem
     generate_leaf_certificate "${1}" "verification-code" \
                               ${root_ca_dir} ${root_ca_password} \
-                              ${openssl_root_config_file}
+                              ${root_ca_prefix}
 }
 
 ###############################################################################
@@ -333,7 +337,7 @@ function generate_device_certificate()
     rm -f ./certs/device/$1-full-chain.cert.pem
     generate_leaf_certificate "${1}" "device/${1}" \
                               ${intermediate_ca_dir} ${intermediate_ca_password} \
-                              ${openssl_intermediate_config_file}
+                              ${intermediate_ca_prefix}
 }
 
 ###############################################################################
@@ -359,7 +363,7 @@ function generate_edge_device_certificate()
                                        ${device_prefix} \
                                        ${intermediate_ca_dir} \
                                        ${intermediate_ca_password} \
-                                       ${openssl_intermediate_config_file} \
+                                       ${intermediate_ca_prefix} \
                                        "v3_intermediate_ca" "Edge Device"
 }
 
