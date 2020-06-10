@@ -277,6 +277,9 @@ function prepare_filesystem()
     mkdir -p csr
     mkdir -p private
     mkdir -p certs
+    mkdir -p csr/device
+    mkdir -p private/device
+    mkdir -p certs/device
     mkdir -p intermediateCerts
     mkdir -p newcerts
 
