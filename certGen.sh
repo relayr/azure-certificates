@@ -12,15 +12,13 @@
 # These certs are intended only to help demonstrate and prototype CA certs.
 ###############################################################################
 
-root_ca_dir="."
-home_dir="."
+cert_dir="."
 algorithm="genrsa"
-root_ca_password="P@ssw0rd"
 key_bits_length="4096"
 days_till_expire=30
 ca_chain_prefix="relayr-test-only.chain.ca"
-intermediate_ca_dir="."
 openssl_config_file="./openssl.cnf"
+root_ca_password="P@ssw0rd"
 intermediate_ca_password="P@ssw0rd"
 root_ca_prefix="relayr-test-only.root.ca"
 intermediate_ca_prefix="relayr-test-only.intermediate"
@@ -51,15 +49,14 @@ function generate_root_ca()
 
     local password_cmd=" -aes256 -passout pass:${root_ca_password} "
 
-    cd ${home_dir}
     echo "Creating the Root CA Private Key"
 
     openssl ${algorithm} \
             ${password_cmd} \
-            -out ${root_ca_dir}/private/${root_ca_prefix}.key.pem \
+            -out ${cert_dir}/private/${root_ca_prefix}.key.pem \
             ${key_bits_length}
     [ $? -eq 0 ] || exit $?
-    chmod 400 ${root_ca_dir}/private/${root_ca_prefix}.key.pem
+    chmod 400 ${cert_dir}/private/${root_ca_prefix}.key.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Creating the Root CA Certificate"
@@ -70,22 +67,22 @@ function generate_root_ca()
             -x509 \
             -config ${openssl_config_file} \
             ${password_cmd} \
-            -key ${root_ca_dir}/private/${root_ca_prefix}.key.pem \
+            -key ${cert_dir}/private/${root_ca_prefix}.key.pem \
             -subj "$(makeCNsubject "${common_name}")" \
             -days ${days_till_expire} \
             -sha256 \
             -extensions v3_ca \
-            -out ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem
+            -out ${cert_dir}/certs/${root_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
-    chmod 444 ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem
+    chmod 444 ${cert_dir}/certs/${root_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "CA Root Certificate Generated At:"
     echo "---------------------------------"
-    echo "    ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem"
+    echo "    ${cert_dir}/certs/${root_ca_prefix}.cert.pem"
     echo ""
     openssl x509 -noout -text \
-            -in ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem
+            -in ${cert_dir}/certs/${root_ca_prefix}.cert.pem
 
     warn_certs_not_for_production
 
@@ -104,14 +101,13 @@ function generate_intermediate_ca()
     local password_cmd=" -aes256 -passout pass:${intermediate_ca_password} "
     echo "Creating the Intermediate Device CA"
     echo "-----------------------------------"
-    cd ${home_dir}
 
     openssl ${algorithm} \
             ${password_cmd} \
-            -out ${intermediate_ca_dir}/private/${intermediate_ca_prefix}.key.pem \
+            -out ${cert_dir}/private/${intermediate_ca_prefix}.key.pem \
             ${key_bits_length}
     [ $? -eq 0 ] || exit $?
-    chmod 400 ${intermediate_ca_dir}/private/${intermediate_ca_prefix}.key.pem
+    chmod 400 ${cert_dir}/private/${intermediate_ca_prefix}.key.pem
     [ $? -eq 0 ] || exit $?
 
 
@@ -123,8 +119,8 @@ function generate_intermediate_ca()
         ${password_cmd} \
         -config ${openssl_config_file} \
         -subj "$(makeCNsubject "${common_name}")" \
-        -key ${intermediate_ca_dir}/private/${intermediate_ca_prefix}.key.pem \
-        -out ${intermediate_ca_dir}/csr/${intermediate_ca_prefix}.csr.pem
+        -key ${cert_dir}/private/${intermediate_ca_prefix}.key.pem \
+        -out ${cert_dir}/csr/${intermediate_ca_prefix}.csr.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Signing the Intermediate Certificate with Root CA Cert"
@@ -136,41 +132,41 @@ function generate_intermediate_ca()
         ${password_cmd} \
         -extensions v3_intermediate_ca \
         -days ${days_till_expire} -notext -md sha256 \
-        -keyfile ${root_ca_dir}/private/${root_ca_prefix}.key.pem \
-        -cert ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem \
-        -in ${intermediate_ca_dir}/csr/${intermediate_ca_prefix}.csr.pem \
-        -out ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem
+        -keyfile ${cert_dir}/private/${root_ca_prefix}.key.pem \
+        -cert ${cert_dir}/certs/${root_ca_prefix}.cert.pem \
+        -in ${cert_dir}/csr/${intermediate_ca_prefix}.csr.pem \
+        -out ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
-    chmod 444 ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem
+    chmod 444 ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Verify signature of the Intermediate Device Certificate with Root CA"
     echo "-----------------------------------"
     openssl verify \
-            -CAfile ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem \
-            ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem
+            -CAfile ${cert_dir}/certs/${root_ca_prefix}.cert.pem \
+            ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Intermediate CA Certificate Generated At:"
     echo "-----------------------------------------"
-    echo "    ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem"
+    echo "    ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem"
     echo ""
     openssl x509 -noout -text \
-            -in ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem
+            -in ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Create Root + Intermediate CA Chain Certificate"
     echo "-----------------------------------"
-    cat ${intermediate_ca_dir}/certs/${intermediate_ca_prefix}.cert.pem \
-        ${root_ca_dir}/certs/${root_ca_prefix}.cert.pem > \
-        ${intermediate_ca_dir}/certs/${ca_chain_prefix}.cert.pem
+    cat ${cert_dir}/certs/${intermediate_ca_prefix}.cert.pem \
+        ${cert_dir}/certs/${root_ca_prefix}.cert.pem > \
+        ${cert_dir}/certs/${ca_chain_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
-    chmod 444 ${intermediate_ca_dir}/certs/${ca_chain_prefix}.cert.pem
+    chmod 444 ${cert_dir}/certs/${ca_chain_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Root + Intermediate CA Chain Certificate Generated At:"
     echo "------------------------------------------------------"
-    echo "    ${intermediate_ca_dir}/certs/${ca_chain_prefix}.cert.pem"
+    echo "    ${cert_dir}/certs/${ca_chain_prefix}.cert.pem"
 
     warn_certs_not_for_production
 }
@@ -183,58 +179,56 @@ function generate_device_certificate_common()
 {
     local common_name="${1}"
     local device_prefix="${2}"
-    local certificate_dir="${3}"
-    local ca_password="${4}"
+    local ca_password="${3}"
     local password_cmd=" -passin pass:${ca_password} "
-    local ca_prefix="${5}"
-    local openssl_config_extension="${6}"
-    local cert_type_diagnostic="${7}"
+    local ca_prefix="${4}"
+    local openssl_config_extension="${5}"
+    local cert_type_diagnostic="${6}"
 
     echo "Creating ${cert_type_diagnostic} Certificate"
     echo "----------------------------------------"
-    cd ${home_dir}
 
     openssl ${algorithm} \
-            -out ${certificate_dir}/private/${device_prefix}.key.pem \
+            -out ${cert_dir}/private/${device_prefix}.key.pem \
             ${key_bits_length}
     [ $? -eq 0 ] || exit $?
-    chmod 444 ${certificate_dir}/private/${device_prefix}.key.pem
+    chmod 444 ${cert_dir}/private/${device_prefix}.key.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Create the ${cert_type_diagnostic} Certificate Request"
     echo "----------------------------------------"
     openssl req -config ${openssl_config_file} \
-        -key ${certificate_dir}/private/${device_prefix}.key.pem \
+        -key ${cert_dir}/private/${device_prefix}.key.pem \
         -subj "$(makeCNsubject "${common_name}")" \
-        -new -sha256 -out ${certificate_dir}/csr/${device_prefix}.csr.pem
+        -new -sha256 -out ${cert_dir}/csr/${device_prefix}.csr.pem
     [ $? -eq 0 ] || exit $?
 
     openssl ca -batch -config ${openssl_config_file} \
             ${password_cmd} \
             -extensions "${openssl_config_extension}" \
             -days ${days_till_expire} -notext -md sha256 \
-            -keyfile ${certificate_dir}/private/${ca_prefix}.key.pem \
-            -cert ${certificate_dir}/certs/${ca_prefix}.cert.pem \
-            -in ${certificate_dir}/csr/${device_prefix}.csr.pem \
-            -out ${certificate_dir}/certs/${device_prefix}.cert.pem
+            -keyfile ${cert_dir}/private/${ca_prefix}.key.pem \
+            -cert ${cert_dir}/certs/${ca_prefix}.cert.pem \
+            -in ${cert_dir}/csr/${device_prefix}.csr.pem \
+            -out ${cert_dir}/certs/${device_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
-    chmod 444 ${certificate_dir}/certs/${device_prefix}.cert.pem
+    chmod 444 ${cert_dir}/certs/${device_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "Verify signature of the ${cert_type_diagnostic}" \
          " certificate with the signer"
     echo "-----------------------------------"
     openssl verify \
-            -CAfile ${certificate_dir}/certs/${ca_chain_prefix}.cert.pem \
-            ${certificate_dir}/certs/${device_prefix}.cert.pem
+            -CAfile ${cert_dir}/certs/${ca_chain_prefix}.cert.pem \
+            ${cert_dir}/certs/${device_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 
     echo "${cert_type_diagnostic} Certificate Generated At:"
     echo "----------------------------------------"
-    echo "    ${certificate_dir}/certs/${device_prefix}.cert.pem"
+    echo "    ${cert_dir}/certs/${device_prefix}.cert.pem"
     echo ""
     openssl x509 -noout -text \
-            -in ${certificate_dir}/certs/${device_prefix}.cert.pem
+            -in ${cert_dir}/certs/${device_prefix}.cert.pem
     [ $? -eq 0 ] || exit $?
 }
 
@@ -246,12 +240,11 @@ function generate_leaf_certificate()
 {
     local common_name="${1}"
     local device_prefix="${2}"
-    local certificate_dir="${3}"
-    local ca_password="${4}"
-    local ca_prefix="${5}"
+    local ca_password="${3}"
+    local ca_prefix="${4}"
 
     generate_device_certificate_common "${common_name}" "${device_prefix}" \
-                                       "${certificate_dir}" "${ca_password}" \
+                                       "${ca_password}" \
                                        "${ca_prefix}" \
                                        "usr_cert" \
                                        "Leaf Device"
@@ -268,6 +261,8 @@ function prepare_filesystem()
         exit 1
     fi
 
+    cd ${cert_dir}
+
     rm -rf csr
     rm -rf private
     rm -rf certs
@@ -283,11 +278,11 @@ function prepare_filesystem()
     mkdir -p intermediateCerts
     mkdir -p newcerts
 
-    rm -f ./index.txt
-    touch ./index.txt
+    rm -f index.txt
+    touch index.txt
 
-    rm -f ./serial
-    echo 01 > ./serial
+    rm -f serial
+    echo 01 > serial
 }
 
 ###############################################################################
@@ -300,10 +295,10 @@ function generate_verification_certificate()
         exit 1
     fi
 
-    rm -f ./private/verification-code.key.pem
-    rm -f ./certs/verification-code.cert.pem
+    rm -f ${cert_dir}/private/verification-code.key.pem
+    rm -f ${cert_dir}/certs/verification-code.cert.pem
     generate_leaf_certificate "${1}" "verification-code" \
-                              ${root_ca_dir} ${root_ca_password} \
+                              ${root_ca_password} \
                               ${root_ca_prefix}
 }
 
@@ -317,11 +312,11 @@ function generate_device_certificate()
         exit 1
     fi
 
-    rm -f ./private/device/$1.key.pem
-    rm -f ./certs/device/$1.key.pem
-    rm -f ./certs/device/$1-full-chain.cert.pem
+    rm -f ${cert_dir}/private/device/$1.key.pem
+    rm -f ${cert_dir}/certs/device/$1.key.pem
+    rm -f ${cert_dir}/certs/device/$1-full-chain.cert.pem
     generate_leaf_certificate "${1}" "device/${1}" \
-                              ${intermediate_ca_dir} ${intermediate_ca_password} \
+                              ${intermediate_ca_password} \
                               ${intermediate_ca_prefix}
 }
 
@@ -335,9 +330,9 @@ function generate_edge_device_certificate()
         echo "Usage: <subjectName>"
         exit 1
     fi
-    rm -f ./private/new-edge-device.key.pem
-    rm -f ./certs/new-edge-device.cert.pem
-    rm -f ./certs/new-edge-device-full-chain.cert.pem
+    rm -f ${cert_dir}/private/new-edge-device.key.pem
+    rm -f ${cert_dir}/certs/new-edge-device.cert.pem
+    rm -f ${cert_dir}/certs/new-edge-device-full-chain.cert.pem
 
     # Note: Appending a '.ca' to the common name is useful in situations
     # where a user names their hostname as the edge device name.
@@ -346,7 +341,6 @@ function generate_edge_device_certificate()
     # which essentially results in "loop" for validation purposes.
     generate_device_certificate_common "${1}.ca" \
                                        ${device_prefix} \
-                                       ${intermediate_ca_dir} \
                                        ${intermediate_ca_password} \
                                        ${intermediate_ca_prefix} \
                                        "v3_intermediate_ca" "Edge Device"
