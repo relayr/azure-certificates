@@ -70,6 +70,8 @@ function generate_root_ca()
             -extensions v3_ca \
             -out ${cert_dir}/certs/${common_name}.ca.cert.pem
     [ $? -eq 0 ] || exit $?
+    cp ${cert_dir}/certs/${common_name}.ca.cert.pem ${cert_dir}/certs/${common_name}.chain.cert.pem
+    [ $? -eq 0 ] || exit $?
     chmod 444 ${cert_dir}/certs/${common_name}.ca.cert.pem
     [ $? -eq 0 ] || exit $?
 
