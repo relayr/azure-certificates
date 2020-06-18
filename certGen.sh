@@ -142,7 +142,7 @@ function generate_intermediate_ca()
     echo "Verify signature of the Intermediate Device Certificate with Root CA"
     echo "-----------------------------------"
     openssl verify \
-            -CAfile ${cert_dir}/certs/${ca_common_name}.ca.cert.pem \
+            -CAfile ${cert_dir}/certs/${ca_common_name}.chain.cert.pem \
             ${cert_dir}/certs/${common_name}.ca.cert.pem
     [ $? -eq 0 ] || exit $?
 
@@ -157,7 +157,7 @@ function generate_intermediate_ca()
     echo "Create Root + Intermediate CA Chain Certificate"
     echo "-----------------------------------"
     cat ${cert_dir}/certs/${common_name}.ca.cert.pem \
-        ${cert_dir}/certs/${ca_common_name}.ca.cert.pem > \
+        ${cert_dir}/certs/${ca_common_name}.chain.cert.pem > \
         ${cert_dir}/certs/${common_name}.chain.cert.pem
     [ $? -eq 0 ] || exit $?
     chmod 444 ${cert_dir}/certs/${common_name}.chain.cert.pem
