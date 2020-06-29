@@ -15,7 +15,7 @@
 cert_dir="."
 algorithm="genrsa"
 key_bits_length="4096"
-days_till_expire=30
+days_till_expire=100
 openssl_config_file="./openssl.cnf"
 ca_password="P@ssw0rd"
 
