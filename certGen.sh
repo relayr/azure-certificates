@@ -179,10 +179,10 @@ function generate_device_certificate_common()
     local common_name="${1}"
     local device_prefix="${2}"
     local ca_prefix="${3}"
-    local ca_password="${4}"
+    local openssl_config_extension="${4}"
+    local cert_type_diagnostic="${5}"
+
     local password_cmd=" -passin pass:${ca_password} "
-    local openssl_config_extension="${5}"
-    local cert_type_diagnostic="${6}"
 
     echo "Creating ${cert_type_diagnostic} Certificate"
     echo "----------------------------------------"
@@ -243,7 +243,6 @@ function generate_leaf_certificate()
 
     generate_device_certificate_common "${common_name}" "${device_prefix}" \
                                        "${ca_prefix}" \
-                                       "${ca_password}" \
                                        "usr_cert" \
                                        "Leaf Device"
 }
@@ -321,25 +320,22 @@ function generate_device_certificate()
 ###############################################################################
 function generate_edge_device_certificate()
 {
-    local device_prefix="new-edge-device"
     if [ $# -ne 2 ]; then
         echo "Usage: <subjectName> <caSubjectName>"
         exit 1
     fi
-    rm -f ${cert_dir}/private/new-edge-device.key.pem
-    rm -f ${cert_dir}/certs/new-edge-device.cert.pem
-    rm -f ${cert_dir}/certs/new-edge-device-full-chain.cert.pem
+    rm -f ${cert_dir}/private/device/$1.key.pem
+    rm -f ${cert_dir}/certs/device/$1.cert.pem
+    rm -f ${cert_dir}/certs/device/$1-full-chain.cert.pem
 
     # Note: Appending a '.ca' to the common name is useful in situations
     # where a user names their hostname as the edge device name.
     # By doing so we avoid TLS validation errors where we have a server or
     # client certificate where the hostname is used as the common name
     # which essentially results in "loop" for validation purposes.
-    generate_device_certificate_common "${1}.ca" \
-                                       ${device_prefix} \
-                                       ${2} \
-                                       ${ca_password} \
-                                       "v3_intermediate_ca" "Edge Device"
+    generate_device_certificate_common "${1}.ca" "device/${1}" \
+                                        ${2} \
+                                        "v3_intermediate_ca" "Edge Device"
 }
 
 if   [ "${1}" == "init" ]; then
