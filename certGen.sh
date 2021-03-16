@@ -45,15 +45,17 @@ function generate_root_ca()
 
     local password_cmd=" -aes256 -passout pass:${ca_password} "
 
-    echo "Creating the Root CA Private Key"
+    if [ ! -f ${cert_dir}/private/${common_name}.ca.key.pem ]; then
+        echo "Creating the Root CA Private Key"
 
-    openssl ${algorithm} \
+        openssl ${algorithm} \
             ${password_cmd} \
             -out ${cert_dir}/private/${common_name}.ca.key.pem \
             ${key_bits_length}
-    [ $? -eq 0 ] || exit $?
-    chmod 400 ${cert_dir}/private/${common_name}.ca.key.pem
-    [ $? -eq 0 ] || exit $?
+        [ $? -eq 0 ] || exit $?
+        chmod 400 ${cert_dir}/private/${common_name}.ca.key.pem
+        [ $? -eq 0 ] || exit $?
+    fi
 
     echo "Creating the Root CA Certificate"
     password_cmd=" -passin pass:${ca_password} "
@@ -98,16 +100,19 @@ function generate_intermediate_ca()
     local ca_common_name=$2
 
     local password_cmd=" -aes256 -passout pass:${ca_password} "
-    echo "Creating the Intermediate Device CA"
-    echo "-----------------------------------"
 
-    openssl ${algorithm} \
+    if [ ! -f ${cert_dir}/private/${common_name}.ca.key.pem ]; then
+        echo "Creating the Intermediate Device CA"
+        echo "-----------------------------------"
+
+        openssl ${algorithm} \
             ${password_cmd} \
             -out ${cert_dir}/private/${common_name}.ca.key.pem \
             ${key_bits_length}
-    [ $? -eq 0 ] || exit $?
-    chmod 400 ${cert_dir}/private/${common_name}.ca.key.pem
-    [ $? -eq 0 ] || exit $?
+        [ $? -eq 0 ] || exit $?
+        chmod 400 ${cert_dir}/private/${common_name}.ca.key.pem
+        [ $? -eq 0 ] || exit $?
+    fi
 
 
     echo "Creating the Intermediate Device CA CSR"
@@ -184,15 +189,17 @@ function generate_device_certificate_common()
 
     local password_cmd=" -passin pass:${ca_password} "
 
-    echo "Creating ${cert_type_diagnostic} Certificate"
-    echo "----------------------------------------"
+    if [ ! -f ${cert_dir}/private/${device_prefix}.key.pem ]; then
+        echo "Creating ${cert_type_diagnostic} Certificate"
+        echo "----------------------------------------"
 
-    openssl ${algorithm} \
+        openssl ${algorithm} \
             -out ${cert_dir}/private/${device_prefix}.key.pem \
             ${key_bits_length}
-    [ $? -eq 0 ] || exit $?
-    chmod 444 ${cert_dir}/private/${device_prefix}.key.pem
-    [ $? -eq 0 ] || exit $?
+        [ $? -eq 0 ] || exit $?
+        chmod 444 ${cert_dir}/private/${device_prefix}.key.pem
+        [ $? -eq 0 ] || exit $?
+    fi
 
     echo "Create the ${cert_type_diagnostic} Certificate Request"
     echo "----------------------------------------"
